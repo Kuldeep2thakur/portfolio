@@ -11,10 +11,18 @@
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "start": "cd backend && npm start"
   },
-  "keywords": ["portfolio", "react", "nodejs", "firebase"],
+  "keywords": [
+    "portfolio",
+    "react",
+    "nodejs",
+    "firebase"
+  ],
   "author": "Your Name",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "react-scripts": "^5.0.1"
   }
 }
