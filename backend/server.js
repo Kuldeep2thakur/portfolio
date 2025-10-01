@@ -53,31 +53,19 @@ app.get('/health', (req, res) => {
   });
 });
 
+
 // API routes
 app.use('/api/projects', projectsRouter);
 app.use('/api/contact', contactRouter);
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Portfolio API is running',
-    version: '1.0.0',
-    endpoints: {
-      health: '/health',
-      projects: '/api/projects',
-      contact: '/api/contact'
-    }
-  });
-});
+// Serve React static files (after API routes)
+const path = require('path');
+const buildPath = path.join(__dirname, '../frontend/build');
+app.use(express.static(buildPath));
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: 'Endpoint not found',
-    path: req.originalUrl
-  });
+// For any route not handled by API, serve React index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(buildPath, 'index.html'));
 });
 
 // Global error handler
