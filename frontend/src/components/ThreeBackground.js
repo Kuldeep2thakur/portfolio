@@ -108,10 +108,13 @@ const ThreeBackground = () => {
     window.addEventListener('resize', handleResize);
 
     // Cleanup
+    const currentMount = mountRef.current;
     return () => {
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('mousemove', handleMouseMove);
-      mountRef.current?.removeChild(renderer.domElement);
+      if (currentMount) {
+        currentMount.removeChild(renderer.domElement);
+      }
       renderer.dispose();
     };
   }, []);

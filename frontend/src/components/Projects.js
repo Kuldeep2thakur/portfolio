@@ -2,9 +2,43 @@ import React, { useState, useEffect } from 'react';
 import foodImg from './food.png';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { FiGithub, FiExternalLink, FiCode } from 'react-icons/fi';
+import { FiGithub, FiExternalLink } from 'react-icons/fi';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/config';
+
+// Sample projects data (replace with Firebase data)
+const sampleProjects = [
+  {
+    id: 1,
+    title: 'Foodshare',
+    description: 'A responsive web application that helps reduce food waste by allowing users to share, donate, or sell excess food they cannot consume.',
+    image: foodImg,
+    techStack: [
+      'Next.js',
+      'React',
+      'TypeScript',
+      'Tailwind CSS',
+      'Firebase (Auth, Firestore, Storage)',
+      'Cloudinary',
+      'Framer Motion',
+      'React Icons'
+    ],
+    githubUrl: 'https://github.com/Kuldeep2thakur/food-share',
+    demoUrl: 'https://food-share-gamma.vercel.app/',
+    featured: true
+  },
+  {
+    id: 2,
+    title: 'Task Management App',
+    description: 'A collaborative task management application with real-time updates, drag-and-drop functionality, team collaboration features, and progress tracking.',
+    image: 'food.png',
+    techStack: ['React', 'Firebase', 'Tailwind CSS', 'Framer Motion'],
+    githubUrl: 'https://github.com/kuldeepsengar/task-management-app',
+    demoUrl: 'https://task-app-kuldeep.netlify.app',
+    featured: true
+  },
+ 
+];
 
 const Projects = () => {
   const [projects, setProjects] = useState([]);
@@ -13,40 +47,6 @@ const Projects = () => {
     triggerOnce: true,
     threshold: 0.1
   });
-
-  // Sample projects data (replace with Firebase data)
-  const sampleProjects = [
-    {
-      id: 1,
-      title: 'Foodshare',
-      description: 'A responsive web application that helps reduce food waste by allowing users to share, donate, or sell excess food they cannot consume.',
-      image: foodImg,
-      techStack: [
-        'Next.js',
-        'React',
-        'TypeScript',
-        'Tailwind CSS',
-        'Firebase (Auth, Firestore, Storage)',
-        'Cloudinary',
-        'Framer Motion',
-        'React Icons'
-      ],
-      githubUrl: 'https://github.com/Kuldeep2thakur/food-share',
-      demoUrl: 'https://food-share-gamma.vercel.app/',
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'Task Management App',
-      description: 'A collaborative task management application with real-time updates, drag-and-drop functionality, team collaboration features, and progress tracking.',
-      image: 'food.png',
-      techStack: ['React', 'Firebase', 'Tailwind CSS', 'Framer Motion'],
-      githubUrl: 'https://github.com/kuldeepsengar/task-management-app',
-      demoUrl: 'https://task-app-kuldeep.netlify.app',
-      featured: true
-    },
-   
-  ];
 
   useEffect(() => {
     const fetchProjects = async () => {
