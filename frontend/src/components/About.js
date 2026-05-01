@@ -8,7 +8,6 @@ import { db } from '../firebase/config';
 const About = () => {
   const [skills, setSkills] = useState([]);
   const [bio, setBio] = useState('');
-  const [profileImage, setProfileImage] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,7 +28,6 @@ const About = () => {
         const profSnap = await getDoc(doc(db, 'profile', 'main'));
         if (profSnap.exists()) {
           if (profSnap.data().bio) setBio(profSnap.data().bio);
-          if (profSnap.data().profileImage) setProfileImage(profSnap.data().profileImage);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
