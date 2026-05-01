@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebase/config';
 import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
 import { collection, getDocs, addDoc, deleteDoc, updateDoc, doc, getDoc, setDoc } from 'firebase/firestore';
-import { FiLogOut, FiTrash2, FiPlus, FiMessageSquare, FiFolder, FiUser, FiStar, FiEdit2 } from 'react-icons/fi';
+import { FiLogOut, FiTrash2, FiPlus, FiMessageSquare, FiFolder, FiUser, FiStar, FiEdit2, FiAward } from 'react-icons/fi';
 
 const Admin = () => {
   const [user, setUser] = useState(null);
@@ -12,6 +12,7 @@ const Admin = () => {
   const [projects, setProjects] = useState([]);
   const [messages, setMessages] = useState([]);
   const [skills, setSkills] = useState([]);
+  const [certificates, setCertificates] = useState([]);
   const [profile, setProfile] = useState({ bio: '', resumeLink: '', title: '', profileImage: '' });
   
   const [activeTab, setActiveTab] = useState('projects');
@@ -28,7 +29,12 @@ const Admin = () => {
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [isProfileUploading, setIsProfileUploading] = useState(false);
   
-  const [newSkill, setNewSkill] = useState({ name: '', icon: '' });
+  const [newSkill, setNewSkill] = useState({ name: '', icon: '', category: 'Frontend' });
+  const [newCertificate, setNewCertificate] = useState({ title: '', issuer: '', date: '', description: '', link: '' });
+  const [certImageFile, setCertImageFile] = useState(null);
+  const [certPdfFile, setCertPdfFile] = useState(null);
+  const [certUploadType, setCertUploadType] = useState('url'); // 'url' | 'image' | 'pdf'
+  const [isCertUploading, setIsCertUploading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -52,6 +58,10 @@ const Admin = () => {
     // Fetch Skills
     const skillSnap = await getDocs(collection(db, 'skills'));
     setSkills(skillSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+    // Fetch Certificates
+    const certSnap = await getDocs(collection(db, 'certificates'));
+    setCertificates(certSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
     // Fetch Profile
     const profSnap = await getDoc(doc(db, 'profile', 'main'));
@@ -154,11 +164,63 @@ const Admin = () => {
     e.preventDefault();
     try {
       await addDoc(collection(db, 'skills'), newSkill);
-      setNewSkill({ name: '', icon: '' });
+      setNewSkill({ name: '', icon: '', category: 'Frontend' });
       fetchData();
       alert("Skill Added!");
     } catch (error) {
       alert("Error: " + error.message);
+    }
+  };
+
+  // --- CERTIFICATES ---
+  const handleAddCertificate = async (e) => {
+    e.preventDefault();
+    setIsCertUploading(true);
+    try {
+      let imageUrl = '';
+      let pdfUrl = '';
+
+      if (certUploadType === 'image' && certImageFile) {
+        imageUrl = await handleImageUpload(certImageFile);
+      } else if (certUploadType === 'pdf' && certPdfFile) {
+        // Upload PDF to Cloudinary as raw file
+        const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+        const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
+        const formData = new FormData();
+        formData.append('file', certPdfFile);
+        formData.append('upload_preset', uploadPreset);
+        formData.append('resource_type', 'raw');
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`, { method: 'POST', body: formData });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.error?.message || 'PDF upload failed');
+        }
+        const data = await res.json();
+        pdfUrl = data.secure_url;
+      }
+
+      await addDoc(collection(db, 'certificates'), {
+        ...newCertificate,
+        image: imageUrl,
+        pdf: pdfUrl,
+        uploadType: certUploadType,
+      });
+      setNewCertificate({ title: '', issuer: '', date: '', description: '', link: '' });
+      setCertImageFile(null);
+      setCertPdfFile(null);
+      fetchData();
+      alert("Certificate Added!");
+    } catch (error) {
+      alert("Error: " + error.message);
+    } finally {
+      setIsCertUploading(false);
+    }
+  };
+
+  const handleDeleteCertificate = async (id) => {
+    if (window.confirm("Delete this certificate?")) {
+      await deleteDoc(doc(db, 'certificates', id));
+      fetchData();
     }
   };
 
@@ -241,9 +303,10 @@ const Admin = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
+        <div className="flex gap-3 mb-8 overflow-x-auto pb-2 flex-wrap">
           <button onClick={() => setActiveTab('projects')} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold whitespace-nowrap ${activeTab === 'projects' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-300'}`}><FiFolder /> Projects</button>
           <button onClick={() => setActiveTab('skills')} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold whitespace-nowrap ${activeTab === 'skills' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-300'}`}><FiStar /> Skills</button>
+          <button onClick={() => setActiveTab('certificates')} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold whitespace-nowrap ${activeTab === 'certificates' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-300'}`}><FiAward /> Certificates</button>
           <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold whitespace-nowrap ${activeTab === 'profile' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-300'}`}><FiUser /> Profile & Resume</button>
           <button onClick={() => setActiveTab('messages')} className={`flex items-center gap-2 px-6 py-3 rounded-xl font-semibold whitespace-nowrap ${activeTab === 'messages' ? 'bg-primary-600 text-white' : 'bg-white dark:bg-dark-800 text-gray-600 dark:text-gray-300'}`}><FiMessageSquare /> Messages ({messages.length})</button>
         </div>
@@ -389,20 +452,140 @@ const Admin = () => {
               </h2>
               <form onSubmit={handleAddSkill} className="space-y-4">
                 <input type="text" placeholder="Skill Name (e.g. React)" required value={newSkill.name} onChange={e => setNewSkill({...newSkill, name: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none" />
-                <input type="text" placeholder="Icon Emoji (e.g. ⚛️)" required value={newSkill.icon} onChange={e => setNewSkill({...newSkill, icon: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none" />
+                <input type="text" placeholder="Icon Emoji (e.g. ⚛️) — optional" value={newSkill.icon} onChange={e => setNewSkill({...newSkill, icon: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none" />
+                <select value={newSkill.category} onChange={e => setNewSkill({...newSkill, category: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none">
+                  <option value="Frontend">Frontend</option>
+                  <option value="Backend">Backend</option>
+                  <option value="Database">Database</option>
+                  <option value="Tools">Tools & Others</option>
+                </select>
                 <button type="submit" className="w-full bg-primary-600 text-white font-bold py-3 rounded-xl">Add Skill</button>
               </form>
             </div>
-            <div className="lg:col-span-2">
-               <div className="flex flex-wrap gap-4">
-                {skills.map(skill => (
-                  <div key={skill.id} className="bg-white dark:bg-dark-800 px-6 py-4 rounded-2xl shadow-sm flex items-center gap-4">
-                    <span className="text-2xl">{skill.icon}</span>
-                    <span className="font-bold text-gray-900 dark:text-white">{skill.name}</span>
-                    <button onClick={() => handleDeleteSkill(skill.id)} className="ml-2 text-red-500 hover:text-red-700"><FiTrash2 /></button>
+            <div className="lg:col-span-2 space-y-6">
+              {['Frontend', 'Backend', 'Database', 'Tools'].map(cat => {
+                const catSkills = skills.filter(s => (s.category || 'Frontend') === cat);
+                if (catSkills.length === 0) return null;
+                return (
+                  <div key={cat}>
+                    <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 mb-3">{cat === 'Tools' ? 'Tools & Others' : cat}</h3>
+                    <div className="flex flex-wrap gap-3">
+                      {catSkills.map(skill => (
+                        <div key={skill.id} className="bg-white dark:bg-dark-800 px-5 py-3 rounded-2xl shadow-sm flex items-center gap-3 border border-gray-100 dark:border-dark-700">
+                          <span className="text-xl">{skill.icon}</span>
+                          <span className="font-semibold text-gray-900 dark:text-white">{skill.name}</span>
+                          <button onClick={() => handleDeleteSkill(skill.id)} className="ml-1 text-red-400 hover:text-red-600"><FiTrash2 size={14} /></button>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                ))}
-              </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* CERTIFICATES TAB */}
+        {activeTab === 'certificates' && (
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-1 bg-white dark:bg-dark-800 p-6 rounded-2xl shadow-sm h-fit sticky top-24">
+              <h2 className="text-xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+                <FiAward className="text-primary-500" /> Add Certificate
+              </h2>
+              <form onSubmit={handleAddCertificate} className="space-y-4">
+                <input type="text" placeholder="Certificate Title" required value={newCertificate.title} onChange={e => setNewCertificate({...newCertificate, title: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none" />
+                <input type="text" placeholder="Issuing Organization (e.g. Google)" required value={newCertificate.issuer} onChange={e => setNewCertificate({...newCertificate, issuer: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none" />
+                <input type="text" placeholder="Date (e.g. Jan 2025)" required value={newCertificate.date} onChange={e => setNewCertificate({...newCertificate, date: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none" />
+                <textarea placeholder="Short Description (e.g. Completed a course on React & Firebase...)" value={newCertificate.description} onChange={e => setNewCertificate({...newCertificate, description: e.target.value})} rows={3} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none resize-none"></textarea>
+
+                {/* Upload Type Selector */}
+                <div className="space-y-2">
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Proof Type</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[{key:'url', icon:'🔗', label:'URL'}, {key:'image', icon:'🖼️', label:'Image'}, {key:'pdf', icon:'📄', label:'PDF'}].map(opt => (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => { setCertUploadType(opt.key); setCertImageFile(null); setCertPdfFile(null); setNewCertificate(c => ({...c, link: ''})); }}
+                        className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 text-sm font-semibold transition-all ${
+                          certUploadType === opt.key
+                            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                            : 'border-gray-200 dark:border-dark-700 text-gray-500 hover:border-primary-300'
+                        }`}
+                      >
+                        <span className="text-lg">{opt.icon}</span>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Conditional Input */}
+                {certUploadType === 'url' && (
+                  <input type="url" placeholder="Certificate URL (e.g. Coursera link)" value={newCertificate.link} onChange={e => setNewCertificate({...newCertificate, link: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none" />
+                )}
+
+                {certUploadType === 'image' && (
+                  <div className="space-y-2 p-3 bg-gray-50 dark:bg-dark-900 rounded-xl border border-gray-200 dark:border-dark-700">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Upload Certificate Image</label>
+                    {certImageFile && (
+                      <div className="mb-2 w-full h-28 rounded-lg overflow-hidden border border-gray-200 dark:border-dark-600">
+                        <img src={URL.createObjectURL(certImageFile)} alt="Preview" className="w-full h-full object-cover" />
+                      </div>
+                    )}
+                    <input type="file" accept="image/*" onChange={e => setCertImageFile(e.target.files[0])} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/30 dark:file:text-primary-400 cursor-pointer" />
+                  </div>
+                )}
+
+                {certUploadType === 'pdf' && (
+                  <div className="space-y-2 p-3 bg-gray-50 dark:bg-dark-900 rounded-xl border border-gray-200 dark:border-dark-700">
+                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Upload Certificate PDF</label>
+                    {certPdfFile && (
+                      <p className="text-xs text-primary-500 font-semibold truncate">📄 {certPdfFile.name}</p>
+                    )}
+                    <input type="file" accept="application/pdf" onChange={e => setCertPdfFile(e.target.files[0])} className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/30 dark:file:text-primary-400 cursor-pointer" />
+                  </div>
+                )}
+
+                <button type="submit" disabled={isCertUploading} className="w-full bg-primary-600 text-white font-bold py-3 rounded-xl disabled:opacity-50">
+                  {isCertUploading ? 'Uploading...' : 'Add Certificate'}
+                </button>
+              </form>
+            </div>
+            <div className="lg:col-span-2">
+              {certificates.length === 0 ? (
+                <div className="bg-white dark:bg-dark-800 p-12 rounded-3xl text-center border border-gray-100 dark:border-dark-700 flex flex-col items-center justify-center">
+                  <FiAward size={40} className="text-primary-400 mb-4" />
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Certificates Yet</h3>
+                  <p className="text-gray-500">Add your first certification using the form.</p>
+                </div>
+              ) : (
+                <div className="grid sm:grid-cols-2 gap-4">
+                  {certificates.map(cert => (
+                    <div key={cert.id} className="bg-white dark:bg-dark-800 rounded-2xl shadow-sm border border-gray-100 dark:border-dark-700 flex flex-col hover:border-primary-400 transition-colors overflow-hidden">
+                      {/* Certificate Image */}
+                      {cert.image ? (
+                        <div className="w-full h-36 overflow-hidden bg-gray-100 dark:bg-dark-900">
+                          <img src={cert.image} alt={cert.title} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-full h-20 flex items-center justify-center bg-primary-50 dark:bg-primary-900/20">
+                          <FiAward size={32} className="text-primary-400" />
+                        </div>
+                      )}
+                      <div className="p-5 flex flex-col gap-2 flex-grow">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-bold text-gray-900 dark:text-white leading-tight">{cert.title}</h3>
+                          <button onClick={() => handleDeleteCertificate(cert.id)} className="text-red-400 hover:text-red-600 ml-2 flex-shrink-0"><FiTrash2 size={15} /></button>
+                        </div>
+                        <p className="text-sm text-primary-500 font-semibold">{cert.issuer}</p>
+                        <p className="text-xs text-gray-400">{cert.date}</p>
+                        {cert.link && <a href={cert.link} target="_blank" rel="noreferrer" className="text-xs text-primary-400 hover:underline mt-1">View Certificate →</a>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

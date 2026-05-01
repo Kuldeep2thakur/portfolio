@@ -115,6 +115,7 @@ const Contact = () => {
           <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
             Get In Touch
           </h2>
+          <div className="w-20 h-1.5 bg-gradient-to-r from-primary-400 to-primary-600 mx-auto rounded-full mb-6"></div>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             I'm always interested in hearing about new opportunities and exciting projects. 
             Feel free to reach out if you'd like to connect!

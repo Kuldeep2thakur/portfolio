@@ -77,109 +77,129 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
-  const ProjectCard = ({ project, index }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
-      whileHover={{ y: -10 }}
-      className="card overflow-hidden group"
-    >
-      {/* Project Image */}
-      <div className="relative overflow-hidden">
-        <img
-          src={project.image}
-          alt={project.title}
-          className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
-        />
-        {project.featured && (
-          <div className="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-            Featured
+  const ProjectCard = ({ project, index }) => {
+    const [expanded, setExpanded] = useState(false);
+    const DESC_LIMIT = 120;
+    const isLong = project.description && project.description.length > DESC_LIMIT;
+
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 50 }}
+        animate={inView ? { opacity: 1, y: 0 } : {}}
+        transition={{ duration: 0.6, delay: index * 0.1 }}
+        whileHover={{ y: -10 }}
+        className="card overflow-hidden group"
+      >
+        {/* Project Image */}
+        <div className="relative overflow-hidden">
+          <img
+            src={project.image}
+            alt={project.title}
+            className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+          />
+          {project.featured && (
+            <div className="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+              Featured
+            </div>
+          )}
+          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-4">
+              {project.githubUrl && (
+                <motion.a
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  href={project.githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white text-gray-900 p-3 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <FiGithub size={20} />
+                </motion.a>
+              )}
+              {project.demoUrl && (
+                <motion.a
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  href={project.demoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-white text-gray-900 p-3 rounded-full hover:bg-gray-100 transition-colors"
+                >
+                  <FiExternalLink size={20} />
+                </motion.a>
+              )}
+            </div>
           </div>
-        )}
-        <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-4">
+        </div>
+
+        {/* Project Content */}
+        <div className="p-6">
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
+            {project.title}
+          </h3>
+
+          {/* Description with See more/less */}
+          <div className="mb-4">
+            <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+              {isLong && !expanded
+                ? project.description.slice(0, DESC_LIMIT) + '...'
+                : project.description}
+            </p>
+            {isLong && (
+              <button
+                onClick={() => setExpanded(!expanded)}
+                className="mt-1 text-xs font-semibold text-primary-500 hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
+              >
+                {expanded ? 'See less ↑' : 'See more ↓'}
+              </button>
+            )}
+          </div>
+          
+          {/* Tech Stack */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {Array.isArray(project.techStack) && project.techStack.map((tech, techIndex) => (
+              <span
+                key={techIndex}
+                className="px-3 py-1 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 text-sm rounded-full"
+              >
+                {tech}
+              </span>
+            ))}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             {project.githubUrl && (
               <motion.a
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white text-gray-900 p-3 rounded-full hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2 btn-secondary text-sm"
               >
-                <FiGithub size={20} />
+                <FiGithub size={16} />
+                Code
               </motion.a>
             )}
             {project.demoUrl && (
               <motion.a
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 href={project.demoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-white text-gray-900 p-3 rounded-full hover:bg-gray-100 transition-colors"
+                className="flex items-center gap-2 btn-primary text-sm"
               >
-                <FiExternalLink size={20} />
+                <FiExternalLink size={16} />
+                Live Demo
               </motion.a>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Project Content */}
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">
-          {project.title}
-        </h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-          {project.description}
-        </p>
-        
-        {/* Tech Stack */}
-        <div className="flex flex-wrap gap-2 mb-4">
-          {project.techStack.map((tech, techIndex) => (
-            <span
-              key={techIndex}
-              className="px-3 py-1 bg-primary-100 dark:bg-primary-900 text-primary-700 dark:text-primary-300 text-sm rounded-full"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          {project.githubUrl && (
-            <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              href={project.githubUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 btn-secondary text-sm"
-            >
-              <FiGithub size={16} />
-              Code
-            </motion.a>
-          )}
-          {project.demoUrl && (
-            <motion.a
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              href={project.demoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 btn-primary text-sm"
-            >
-              <FiExternalLink size={16} />
-              Live Demo
-            </motion.a>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
+      </motion.div>
+    );
+  };
 
   if (loading) {
     return (
@@ -207,6 +227,7 @@ const Projects = () => {
           <h2 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
             My Projects
           </h2>
+          <div className="w-20 h-1.5 bg-gradient-to-r from-primary-400 to-primary-600 mx-auto rounded-full mb-6"></div>
           <p className="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">
             Here are some of the projects I've worked on. Each project represents a unique challenge 
             and showcases different aspects of my development skills.

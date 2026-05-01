@@ -1,20 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Allow public read access to projects
+
+    // Projects - public read, authenticated write
     match /projects/{projectId} {
       allow read: if true;
-      allow write: if false; // Only allow admin writes
+      allow write: if request.auth != null;
     }
-    
-    // Allow public write access to contacts (for contact form)
+
+    // Skills - public read, authenticated write
+    match /skills/{skillId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Certificates - public read, authenticated write
+    match /certificates/{certId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Profile - public read, authenticated write
+    match /profile/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Contacts - anyone can submit, only authenticated users can read/delete
     match /contacts/{contactId} {
-      allow read: if false; // Only allow admin reads
-      allow create: if true; // Allow anyone to create contact submissions
-      allow update, delete: if false; // Only allow admin updates/deletes
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
     }
-    
-    // Deny all other access
+
+    // Deny everything else
     match /{document=**} {
       allow read, write: if false;
     }
