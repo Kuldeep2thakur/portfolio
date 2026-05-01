@@ -60,13 +60,22 @@ app.use('/api/contact', contactRouter);
 
 // Serve React static files (after API routes)
 const path = require('path');
+const fs = require('fs');
 const buildPath = path.join(__dirname, '../frontend/build');
-app.use(express.static(buildPath));
 
-// For any route not handled by API, serve React index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.join(buildPath, 'index.html'));
-});
+if (fs.existsSync(buildPath)) {
+  app.use(express.static(buildPath));
+  
+  // For any route not handled by API, serve React index.html
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(buildPath, 'index.html'));
+  });
+} else {
+  // If no frontend build exists, just return a simple message for root
+  app.get('/', (req, res) => {
+    res.send('Portfolio API Backend is running!');
+  });
+}
 
 // Global error handler
 app.use((error, req, res, next) => {
