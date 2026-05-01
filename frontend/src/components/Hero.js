@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { FiArrowDown, FiGithub, FiLinkedin, FiMail, FiZap, FiDownload } from 'react-icons/fi';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
@@ -15,6 +17,22 @@ const Hero = () => {
   const socialRef = useRef(null);
   const floatingElementsRef = useRef(null);
   const profileRef = useRef(null);
+
+  const [profileData, setProfileData] = useState({ title: 'Full Stack Developer', resumeLink: '#', profileImage: '' });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const profSnap = await getDoc(doc(db, 'profile', 'main'));
+        if (profSnap.exists()) {
+          setProfileData(prev => ({ ...prev, ...profSnap.data() }));
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const scrollToAbout = () => {
     const element = document.querySelector('#about');
@@ -103,31 +121,20 @@ const Hero = () => {
     <section 
       ref={heroRef}
       id="home" 
-      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-dark-950 via-dark-900 to-dark-800 pt-20"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#0A0A0B] pt-20"
     >
-      {/* Animated Background */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-aurora opacity-30"></div>
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(168,85,247,0.15),transparent_50%)]"></div>
+      {/* Premium Minimalist Background */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Abstract floating gradients */}
+        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary-600/5 blur-[150px]"></div>
+        <div className="absolute top-[40%] -right-[10%] w-[50%] h-[50%] rounded-full bg-secondary-600/5 blur-[150px]"></div>
+        <div className="absolute -bottom-[20%] left-[20%] w-[60%] h-[60%] rounded-full bg-accent-600/5 blur-[150px]"></div>
         
-        {/* Grid Pattern */}
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(168,85,247,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(168,85,247,0.1)_1px,transparent_1px)] bg-[size:50px_50px] opacity-20"></div>
+        {/* Fine dotted mesh overlay for texture */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:24px_24px]"></div>
         
-        {/* Floating Particles */}
-        <div className="absolute inset-0">
-          {[...Array(30)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1 h-1 bg-primary-400 rounded-full animate-float"
-              style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
-                animationDelay: `${Math.random() * 3}s`,
-                animationDuration: `${3 + Math.random() * 3}s`
-              }}
-            />
-          ))}
-        </div>
+        {/* Vignette effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#0A0A0B_100%)]"></div>
       </div>
 
       {/* Main Content */}
@@ -143,82 +150,73 @@ const Hero = () => {
             </div>
 
             {/* Main Title */}
-            <div ref={subtitleRef} className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white leading-tight">
-                I'm{' '}
-                <span className="gradient-text-aurora animate-gradient">
-                  Kuldeep Sengar
-                </span>
+            <div ref={subtitleRef} className="space-y-6">
+              {/* Sleek Subtitle Tag */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
+                <span className="w-2 h-2 rounded-full bg-primary-500 animate-pulse"></span>
+                <span className="text-sm sm:text-base text-gray-300 font-medium tracking-wide">{profileData.title}</span>
+              </div>
+
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-200 to-gray-500 leading-[1.1] tracking-tight">
+                Kuldeep Sengar.
               </h1>
-              
-              {/* Subtitle */}
-              <h2 className="text-xl sm:text-2xl md:text-3xl text-gray-300 font-light">
-                <span className="text-primary-400 font-semibold">Full Stack</span> Developer
-              </h2>
             </div>
             
             {/* Description */}
             <p 
               ref={descriptionRef}
-              className="text-base sm:text-lg text-gray-400 max-w-2xl leading-relaxed mx-auto lg:mx-0"
+              className="text-lg sm:text-xl text-gray-400 max-w-2xl leading-relaxed mx-auto lg:mx-0 font-light"
             >
-              Crafting digital experiences with cutting-edge technology. 
-              Passionate about clean code, innovative solutions, and pushing the boundaries of web development.
-              Specializing in React, Node.js, and modern web technologies.
+              Building exceptional digital experiences. I specialize in scalable web applications, beautiful interfaces, and robust backend architectures.
             </p>
             
             {/* Action Buttons */}
             <div 
               ref={buttonsRef}
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+              className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start pt-4"
             >
               <button
                 onClick={scrollToAbout}
-                className="group relative px-8 py-4 bg-gradient-to-r from-primary-500 to-secondary-500 text-white font-semibold rounded-xl overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl hover:shadow-primary-500/25 transform hover:-translate-y-1"
+                className="group flex items-center justify-center gap-3 px-8 py-4 bg-white text-black font-bold rounded-full transition-all duration-300 hover:scale-105 hover:bg-gray-100 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
               >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  <FiZap className="group-hover:rotate-12 transition-transform" />
-                  Explore My Work
-                </span>
-                <div className="absolute inset-0 bg-gradient-to-r from-primary-600 to-secondary-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span>Explore Work</span>
+                <FiZap className="group-hover:rotate-12 transition-transform" />
               </button>
               
-              <button className="group relative px-8 py-4 border-2 border-primary-500 text-primary-400 font-semibold rounded-xl overflow-hidden transition-all duration-300 hover:bg-primary-500 hover:text-white hover:scale-105 transform hover:-translate-y-1">
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  <FiDownload className="group-hover:rotate-12 transition-transform" />
-                  Download CV
-                </span>
-              </button>
+              <a href={profileData.resumeLink} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-center gap-3 px-8 py-4 bg-transparent border border-gray-600 text-gray-300 font-bold rounded-full transition-all duration-300 hover:border-white hover:text-white hover:bg-white/5">
+                <span>Download CV</span>
+                <FiDownload className="group-hover:-translate-y-1 transition-transform" />
+              </a>
             </div>
             
             {/* Social Links */}
             <div 
               ref={socialRef}
-              className="flex justify-center lg:justify-start gap-4 pt-4"
+              className="flex justify-center lg:justify-start gap-6 pt-6"
             >
               <a
                 href="https://github.com/kuldeep2thakur"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-primary-500/20 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-primary-500/25 transform hover:-translate-y-1"
+                className="text-gray-400 hover:text-white transition-colors duration-300 hover:-translate-y-1 transform"
               >
-                <FiGithub size={24} className="group-hover:rotate-12 transition-transform" />
+                <FiGithub size={28} />
               </a>
               
               <a
                 href="https://www.linkedin.com/in/kuldeep-sengar-1a12a9330?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-secondary-500/20 text-secondary-400 hover:bg-secondary-500 hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-secondary-500/25 transform hover:-translate-y-1"
+                className="text-gray-400 hover:text-white transition-colors duration-300 hover:-translate-y-1 transform"
               >
-                <FiLinkedin size={24} className="group-hover:rotate-12 transition-transform" />
+                <FiLinkedin size={28} />
               </a>
               
               <a
                 href="mailto:kuldeepsengar5678@gmail.com"
-                className="group p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-accent-500/20 text-accent-400 hover:bg-accent-500 hover:text-white transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-accent-500/25 transform hover:-translate-y-1"
+                className="text-gray-400 hover:text-white transition-colors duration-300 hover:-translate-y-1 transform"
               >
-                <FiMail size={24} className="group-hover:rotate-12 transition-transform" />
+                <FiMail size={28} />
               </a>
             </div>
           </div>
@@ -232,46 +230,28 @@ const Hero = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary-500/20 via-secondary-500/20 to-accent-500/20 rounded-full blur-3xl animate-glow"></div>
                 
                 {/* Profile Image Container */}
-                <div className="relative w-full h-full rounded-full bg-gradient-to-br from-primary-500 to-secondary-500 p-1 animate-gradient">
-                  <div className="w-full h-full rounded-full bg-dark-900 p-2">
-                    <div className="w-full h-full rounded-full bg-gradient-to-br from-dark-800 to-dark-700 flex items-center justify-center relative overflow-hidden">
-                      {/* Profile Image Placeholder */}
-                      <div className="text-center p-8">
+                <div className="relative w-full h-full rounded-full p-[2px] bg-gradient-to-b from-gray-500/30 to-transparent backdrop-blur-md">
+                  <div className="w-full h-full rounded-full bg-[#0A0A0B] p-2">
+                    <div className="w-full h-full rounded-full flex items-center justify-center relative overflow-hidden border border-gray-800 bg-gray-900/50">
+                      {/* Profile Image */}
+                      <div className="w-full h-full relative group">
                         <img
-                           src="/portfolio.jpg"
-                           alt="Profile"
-                           className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 rounded-full object-cover mx-auto mb-4 shadow-lg animate-bounce"
+                           src={profileData.profileImage || "/portfolio.jpg"}
+                           alt="Kuldeep Sengar"
+                           className="w-full h-full object-cover rounded-full shadow-2xl filter contrast-[1.05] brightness-95 transition-transform duration-700 group-hover:scale-105 group-hover:brightness-105"
                         />
-                        <span className="text-gray-400 text-base sm:text-lg font-mono">
-                          Kuldeep's Photo
-                        </span>
                       </div>
-                      
-                      {/* Animated Border */}
-                      {/* <div className="absolute inset-0 rounded-full border-2 border-transparent bg-gradient-to-r from-primary-500 via-secondary-500 to-accent-500 bg-clip-border animate-gradient"></div> */}
                     </div>
                   </div>
                 </div>
               </div>
               
-              {/* Floating Elements */}
-              <div ref={floatingElementsRef} className="absolute inset-0">
-                {/* Tech Stack Icons */}
-                <div className="floating-icon absolute -top-6 -right-6 sm:-top-8 sm:-right-8 w-12 h-12 sm:w-16 sm:h-16 bg-primary-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-primary-500/30 animate-float">
-                  <span className="text-lg sm:text-2xl">⚛️</span>
-                </div>
-                
-                <div className="floating-icon absolute -bottom-6 -left-6 sm:-bottom-8 sm:-left-8 w-10 h-10 sm:w-12 sm:h-12 bg-secondary-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-secondary-500/30 animate-float" style={{animationDelay: '1s'}}>
-                  <span className="text-base sm:text-xl">🟢</span>
-                </div>
-                
-                <div className="floating-icon absolute top-1/2 -right-8 sm:-right-12 w-12 h-12 sm:w-14 sm:h-14 bg-accent-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-accent-500/30 animate-float" style={{animationDelay: '2s'}}>
-                  <span className="text-base sm:text-xl">🔥</span>
-                </div>
-                
-                <div className="floating-icon absolute top-1/4 -left-8 sm:-left-12 w-8 h-8 sm:w-10 sm:h-10 bg-primary-500/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-primary-500/30 animate-float" style={{animationDelay: '0.5s'}}>
-                  <span className="text-sm sm:text-lg">⚡</span>
-                </div>
+              {/* Floating Elements (Replaced emojis with sleek UI elements) */}
+              <div ref={floatingElementsRef} className="absolute inset-0 pointer-events-none">
+                {/* Decorative glowing dots instead of emojis */}
+                <div className="absolute -top-4 -right-4 w-8 h-8 bg-primary-500/30 rounded-full blur-md animate-pulse"></div>
+                <div className="absolute -bottom-8 left-4 w-12 h-12 bg-secondary-500/20 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute top-1/2 -left-8 w-6 h-6 bg-accent-500/40 rounded-full blur-sm animate-pulse" style={{ animationDelay: '2s' }}></div>
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import ThreeBackground from './components/ThreeBackground';
 import Navbar from './components/Navbar';
@@ -8,6 +8,20 @@ import About from './components/About';
 import Projects from './components/Projects';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
+import Admin from './pages/Admin';
+
+const MainLayout = () => (
+  <>
+    <Navbar />
+    <main>
+      <Hero />
+      <About />
+      <Projects />
+      <Contact />
+    </main>
+    <Footer />
+  </>
+);
 
 function App() {
   return (
@@ -19,14 +33,10 @@ function App() {
           
           {/* Content */}
           <div className="relative z-10">
-            <Navbar />
-            <main>
-              <Hero />
-              <About />
-              <Projects />
-              <Contact />
-            </main>
-            <Footer />
+            <Routes>
+              <Route path="/" element={<MainLayout />} />
+              <Route path="/admin" element={<Admin />} />
+            </Routes>
           </div>
         </div>
       </Router>

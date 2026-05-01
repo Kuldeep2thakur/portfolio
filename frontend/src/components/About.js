@@ -1,46 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-
-const skills = [
-  { name: 'React', icon: '⚛️' },
-  { name: 'HTML', icon: '🌐' },
-  { name: 'CSS', icon: '🎨' },
-  { name: 'JavaScript', icon: '🟡' },
-  { name: 'Python', icon: '🐍' },
-  { name: 'C', icon: '💻' },
-  { name: 'Firebase', icon: '🔥' }
-];
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 // ...existing code...
 
 const About = () => {
+  const [skills, setSkills] = useState([]);
+  const [bio, setBio] = useState('');
+  const [profileImage, setProfileImage] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      // Fetch dynamic skills
+      try {
+        const skillsSnap = await getDocs(collection(db, 'skills'));
+        if (!skillsSnap.empty) {
+          setSkills(skillsSnap.docs.map(doc => doc.data()));
+        } else {
+          // Fallback default skills if database is empty
+          setSkills([
+            { name: 'React', icon: '⚛️' },
+            { name: 'JavaScript', icon: '🟡' }
+          ]);
+        }
+
+        // Fetch dynamic profile
+        const profSnap = await getDoc(doc(db, 'profile', 'main'));
+        if (profSnap.exists()) {
+          if (profSnap.data().bio) setBio(profSnap.data().bio);
+          if (profSnap.data().profileImage) setProfileImage(profSnap.data().profileImage);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <section id="about" className="py-16 bg-gradient-to-br from-primary-50 via-secondary-100 to-accent-100 dark:from-dark-900 dark:via-dark-800 dark:to-dark-700">
       <div className="container mx-auto px-4">
-        {/* Profile Photo */}
         <motion.div
           className="flex flex-col items-center mb-8"
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="relative flex items-center justify-center">
-            <div className="absolute w-52 h-52 rounded-full border-4 border-primary-400 dark:border-primary-600 animate-spin-slow" style={{ borderTopColor: '#f59e42', borderRightColor: '#6366f1', borderBottomColor: '#10b981', borderLeftColor: '#f59e42' }}></div>
-            <motion.img
-              src="/portfolio.jpg"
-              alt="Profile"
-              className="w-44 h-44 rounded-full object-cover shadow-2xl border-4 border-white dark:border-dark-800 mb-4 transition-transform duration-500 hover:scale-105"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.7, delay: 0.2 }}
-            />
-            <span className="absolute bottom-2 right-2 bg-primary-500 text-white px-3 py-1 rounded-full text-xs shadow-lg">Fresher</span>
-          </div>
           <motion.h2
             className="text-4xl font-extrabold text-primary-700 dark:text-primary-300 mb-2 tracking-tight drop-shadow"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
           >
             About Me
           </motion.h2>
@@ -64,15 +75,21 @@ const About = () => {
         >
           <div className="bg-white dark:bg-dark-800 rounded-2xl shadow-2xl p-10 max-w-3xl w-full border border-primary-100 dark:border-primary-900">
             <h3 className="text-2xl font-extrabold text-primary-700 dark:text-primary-300 mb-4 tracking-tight">Who I Am</h3>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg">
-              I'm a passionate full-stack developer, recently graduated and eager to start my professional journey. My curiosity about technology led me to pursue a degree in Computer Science, where I built a strong foundation in programming and web development.
-            </p>
-            <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg">
-              I specialize in modern web technologies including React, Node.js, and cloud platforms. I love writing clean, maintainable code and creating user experiences that are both beautiful and functional. I'm excited to contribute to real-world projects and grow as a developer.
-            </p>
-            <p className="text-gray-700 dark:text-gray-300 text-lg">
-              When I'm not coding, I enjoy exploring new technologies, learning from the developer community, and taking on personal projects that challenge my skills.
-            </p>
+            {bio ? (
+              <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg whitespace-pre-wrap">{bio}</p>
+            ) : (
+              <>
+                <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg">
+                  I'm a passionate full-stack developer, recently graduated and eager to start my professional journey. My curiosity about technology led me to pursue a degree in Computer Science, where I built a strong foundation in programming and web development.
+                </p>
+                <p className="text-gray-700 dark:text-gray-300 mb-4 text-lg">
+                  I specialize in modern web technologies including React, Node.js, and cloud platforms. I love writing clean, maintainable code and creating user experiences that are both beautiful and functional. I'm excited to contribute to real-world projects and grow as a developer.
+                </p>
+                <p className="text-gray-700 dark:text-gray-300 text-lg">
+                  When I'm not coding, I enjoy exploring new technologies, learning from the developer community, and taking on personal projects that challenge my skills.
+                </p>
+              </>
+            )}
           </div>
         </motion.div>
 
