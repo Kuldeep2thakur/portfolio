@@ -27,7 +27,9 @@ const Admin = () => {
   const [isUploading, setIsUploading] = useState(false);
   
   const [profileImageFile, setProfileImageFile] = useState(null);
+  const [resumeFile, setResumeFile] = useState(null);
   const [isProfileUploading, setIsProfileUploading] = useState(false);
+  const [isResumeUploading, setIsResumeUploading] = useState(false);
   
   const [newSkill, setNewSkill] = useState({ name: '', icon: '', category: 'Frontend' });
   const [newCertificate, setNewCertificate] = useState({ title: '', issuer: '', date: '', description: '', link: '' });
@@ -261,6 +263,60 @@ const Admin = () => {
       alert("Error: " + error.message);
     } finally {
       setIsProfileUploading(false);
+    }
+  };
+
+  const handleResumeUpload = async (e) => {
+    e.preventDefault();
+
+    // If no file selected but a link was manually typed, just save that
+    if (!resumeFile) {
+      if (!profile.resumeLink) return alert("Please select a PDF file or paste a resume URL.");
+      try {
+        await setDoc(doc(db, 'profile', 'main'), { resumeLink: profile.resumeLink }, { merge: true });
+        return alert("Resume link saved!");
+      } catch (err) {
+        return alert("Error: " + err.message);
+      }
+    }
+
+    setIsResumeUploading(true);
+    try {
+      const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
+
+      if (!cloudName || !uploadPreset) {
+        throw new Error("Cloudinary credentials missing in .env");
+      }
+
+      const formData = new FormData();
+      formData.append('file', resumeFile);
+      formData.append('upload_preset', uploadPreset);
+
+      // Use /raw/upload for PDFs so they get a publicly accessible direct URL
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/raw/upload`,
+        { method: 'POST', body: formData }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Cloudinary Error: ${errorData.error?.message || 'Upload failed'}`);
+      }
+
+      const data = await response.json();
+      const resumeUrl = data.secure_url; // direct public URL — no login needed
+
+      const updatedProfile = { ...profile, resumeLink: resumeUrl };
+      await setDoc(doc(db, 'profile', 'main'), updatedProfile, { merge: true });
+      setProfile(updatedProfile);
+      setResumeFile(null);
+      alert("✅ Resume Uploaded Successfully!\nPublic URL saved: " + resumeUrl);
+    } catch (error) {
+      console.error("Resume Upload Error:", error);
+      alert("Upload Error: " + error.message);
+    } finally {
+      setIsResumeUploading(false);
     }
   };
 
@@ -604,15 +660,35 @@ const Admin = () => {
                   <input type="text" placeholder="e.g. Full Stack Developer" value={profile.title} onChange={e => setProfile({...profile, title: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resume Link (Google Drive / PDF URL)</label>
-                  <input type="url" placeholder="https://..." value={profile.resumeLink} onChange={e => setProfile({...profile, resumeLink: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all" />
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">About Me / Bio</label>
                   <textarea placeholder="Write your main bio here..." value={profile.bio} onChange={e => setProfile({...profile, bio: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none h-48 resize-none focus:ring-2 focus:ring-primary-500 transition-all"></textarea>
                 </div>
                 <button type="submit" className="w-full bg-primary-600 hover:bg-primary-700 text-white font-bold px-8 py-3 rounded-xl transition-colors shadow-md">
                   Save Details
+                </button>
+              </form>
+
+              <hr className="my-8 border-gray-100 dark:border-dark-700" />
+
+              <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white flex items-center gap-2">
+                <FiAward className="text-primary-500" /> Upload Resume (CV)
+              </h2>
+              <form onSubmit={handleResumeUpload} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Resume Link</label>
+                  <input type="url" placeholder="https://..." value={profile.resumeLink} onChange={e => setProfile({...profile, resumeLink: e.target.value})} className="w-full px-4 py-3 bg-gray-50 dark:bg-dark-900 rounded-xl text-gray-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500 transition-all mb-4" />
+                  
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Or Upload PDF</label>
+                  <input 
+                    type="file" 
+                    accept="application/pdf" 
+                    onChange={e => setResumeFile(e.target.files[0])} 
+                    className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/30 dark:file:text-primary-400 cursor-pointer" 
+                  />
+                  {resumeFile && <p className="mt-2 text-xs text-primary-500">Selected: {resumeFile.name}</p>}
+                </div>
+                <button type="submit" disabled={isResumeUploading || (!resumeFile && !profile.resumeLink)} className="w-full bg-secondary-600 hover:bg-secondary-700 text-white font-bold px-8 py-3 rounded-xl disabled:opacity-50 transition-colors shadow-md">
+                  {isResumeUploading ? 'Uploading PDF...' : 'Update Resume'}
                 </button>
               </form>
             </div>

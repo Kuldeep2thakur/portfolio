@@ -183,7 +183,12 @@ const Hero = () => {
                 <FiZap className="group-hover:rotate-12 transition-transform" />
               </button>
               
-              <a href={profileData.resumeLink} target="_blank" rel="noopener noreferrer" className="group flex items-center justify-center gap-3 px-8 py-4 bg-transparent border border-gray-600 text-gray-300 font-bold rounded-full transition-all duration-300 hover:border-white hover:text-white hover:bg-white/5">
+              <a 
+                href={profileData.resumeLink || "https://console.cloudinary.com/app/c-3c27c360ea6e5c9465bb7f735a0143/assets/media_library/search/asset/dea576f81ec9a1ce1fda0737455a3e49/manage/summary?view_mode=mosaic&context=manage"} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="group flex items-center justify-center gap-3 px-8 py-4 bg-transparent border border-gray-600 text-gray-300 font-bold rounded-full transition-all duration-300 hover:border-white hover:text-white hover:bg-white/5"
+              >
                 <span>Download CV</span>
                 <FiDownload className="group-hover:-translate-y-1 transition-transform" />
               </a>
